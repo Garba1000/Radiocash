@@ -74,7 +74,7 @@
   <main>
     <div class="panel left">
       <div class="player">
-        <div class="station">Live Radio — cashearning  Stream</div>
+        <div class="station">Live Radio — cashearning Stream</div>
         <div class="controls">
           <button id="playBtn" class="big-btn" title="Play/Pause"><i class="fa fa-play"></i></button>
           <div style="text-align:left">
@@ -287,12 +287,25 @@
       const details = document.getElementById("wdDetails").value.trim();
 
       if (!amount || amount < 10) return tg.showAlert("❌ Minimum withdraw is $10.");
+      if (amount > earned) return tg.showAlert(`❌ You only have $${earned.toFixed(3)} available.`);
       if (!details) return tg.showAlert("❌ Please enter your wallet or account.");
 
-      const msg = `📤 *Withdraw Request*\n👤 User ID: ${tg.initDataUnsafe?.user?.id}\n💵 Amount: $${amount}\n🏦 Method: ${method.toUpperCase()}\n🔗 Wallet/Account: ${details}\n💰 Earned Balance: $${earned.toFixed(3)}\n⭐ Points Balance: ${points}`;
+      // Deduct withdrawn amount from user's earned balance
+      earned -= amount;
+
+      // Deduct proportional points (based on CONVERT_RATE)
+      const pointsToDeduct = Math.ceil(amount / CONVERT_RATE * DEDUCT_POINTS);
+      points = points >= pointsToDeduct ? points - pointsToDeduct : 0;
+
+      saveAll();
+      updateUI();
+
+      const msg = `📤 *Withdraw Request*\n👤 User ID: ${tg.initDataUnsafe?.user?.id}\n💵 Amount: $${amount}\n🏦 Method: ${method.toUpperCase()}\n🔗 Wallet/Account: ${details}\n💰 Remaining Balance: $${earned.toFixed(3)}\n⭐ Remaining Points: ${points}`;
+
+      // Forward to Admin Telegram Chat
       Api.sendMessage({ chat_id: 6136849497, text: msg, parse_mode: "Markdown" });
 
-      tg.showAlert("✅ Withdraw request sent!");
+      tg.showAlert("✅ Withdraw request sent! Amount and proportional points deducted.");
       drawer.style.display = "none";
     });
 
