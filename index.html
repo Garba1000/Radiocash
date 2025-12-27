@@ -158,7 +158,7 @@
   <div id="drawer" class="drawer">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <strong>Withdraw (min $10)</strong>
-      <button id="closeDrawer" class="btn ghost" title="Close"><i class="fa fa-xmark"></i></button>
+      <button id="closeDrawer" class="btn ghost"><i class="fa fa-xmark"></i></button>
     </div>
 
     <label>Amount (USD)</label>
@@ -190,7 +190,7 @@
     const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
     const ADSGRAM_BLOCKS = ["task-task-17583","task-17585","task-17584","task-17586","task-17583","task-17585"];
     const POINTS_PER_TASK = 100;
-    const DEDUCT_INTERVAL = 20000; // 20 seconds
+    const DEDUCT_INTERVAL = 20000;
     const DEDUCT_POINTS = 100;
     const CONVERT_RATE = 0.02;
     const tg = window.Telegram.WebApp;
@@ -218,7 +218,6 @@
     const sessionTimeEl = document.getElementById("sessionTime");
     const lastDeductEl = document.getElementById("lastDeduct");
 
-    // ------------------ UI Update ------------------
     function updateUI() {
       pointsEl.textContent = points;
       earnedEl.textContent = "$" + earned.toFixed(3);
@@ -230,7 +229,6 @@
       localStorage.setItem("earned", earned);
     }
 
-    // ------------------ AdsGram Task ------------------
     function getRandomAdsBlock() {
       return ADSGRAM_BLOCKS[Math.floor(Math.random() * ADSGRAM_BLOCKS.length)];
     }
@@ -256,16 +254,18 @@
     claimButton.addEventListener("click", createAdsTask);
     claimButtonBig.addEventListener("click", createAdsTask);
 
-    // ------------------ Play Radio ------------------
     playBtn.addEventListener("click", () => {
       if (radio.paused) {
         radio.src = STREAM_URL;
         radio.play();
         statusEl.textContent = "🎧 Listening...";
+
         if (listeningTimer) clearInterval(listeningTimer);
+
         listeningTimer = setInterval(() => {
           secondsElapsed += 20;
           sessionTimeEl.textContent = secondsElapsed + "s";
+
           if (points >= DEDUCT_POINTS) {
             points -= DEDUCT_POINTS;
             earned += CONVERT_RATE;
@@ -281,6 +281,7 @@
             claimButtonBig.style.display = "block";
           }
         }, DEDUCT_INTERVAL);
+
       } else {
         radio.pause();
         clearInterval(listeningTimer);
@@ -288,12 +289,12 @@
       }
     });
 
-    // ------------------ Reward Ad + Show Join Popup ------------------
-    const rewardAd = window.Adsgram.init({ blockId: "17582" });
-    rewardAd.show().then(res => {
-      showJoinPopup();
-    }).catch(err=>{
-      showJoinPopup();
+    /* FIXED POPUP CODE */
+    document.addEventListener("DOMContentLoaded", () => {
+      const rewardAd = window.Adsgram.init({ blockId: "17582" });
+      rewardAd.show()
+      .then(() => showJoinPopup())
+      .catch(() => showJoinPopup());
     });
 
     function showJoinPopup(){
@@ -304,7 +305,9 @@
 
     function joinChannelClick(){
       if(!localStorage.getItem("joinedRewardGiven")){
-        points += 10; saveAll(); updateUI();
+        points += 10;
+        saveAll();
+        updateUI();
         localStorage.setItem("joinedRewardGiven","yes");
         alert("🎉 Thanks for joining! +10 points");
       }
@@ -312,7 +315,6 @@
       window.open("https://t.me/Konnetearnchannel","_blank");
     }
 
-    // ------------------ Referral Copy ------------------
     copyReferral.addEventListener("click", () => {
       const uid = tg.initDataUnsafe?.user?.id || "unknown";
       const refLink = `https://t.me/Listensmusicbot?start=${uid}`;
@@ -320,7 +322,6 @@
       tg.showAlert("✅ Referral link copied!");
     });
 
-    // ------------------ Withdraw ------------------
     withdrawOpen.addEventListener("click", () => drawer.style.display = "block");
     closeDrawer.addEventListener("click", () => drawer.style.display = "none");
     cancelWd.addEventListener("click", () => drawer.style.display = "none");
@@ -338,12 +339,25 @@
       const pointsToDeduct = Math.ceil(amount / CONVERT_RATE * DEDUCT_POINTS);
       points = points >= pointsToDeduct ? points - pointsToDeduct : 0;
 
-      saveAll(); updateUI();
+      saveAll(); 
+      updateUI();
 
-      const msg = `📤 *Withdraw Request*\n👤 User ID: ${tg.initDataUnsafe?.user?.id}\n💵 Amount: $${amount}\n🏦 Method: ${method.toUpperCase()}\n🔗 Wallet/Account: ${details}\n💰 Remaining Balance: $${earned.toFixed(3)}\n⭐ Remaining Points: ${points}`;
-      Api.sendMessage({ chat_id: 6136849497, text: msg, parse_mode: "Markdown" });
+      const msg =
+        `📤 *Withdraw Request*
+👤 User ID: ${tg.initDataUnsafe?.user?.id}
+💵 Amount: $${amount}
+🏦 Method: ${method.toUpperCase()}
+🔗 Wallet/Account: ${details}
+💰 Remaining Balance: $${earned.toFixed(3)}
+⭐ Remaining Points: ${points}`;
 
-      tg.showAlert("✅ Withdraw request sent! Amount and proportional points deducted.");
+      Api.sendMessage({
+        chat_id: 6136849497,
+        text: msg,
+        parse_mode: "Markdown"
+      });
+
+      tg.showAlert("✅ Withdraw request sent!");
       drawer.style.display = "none";
     });
 
