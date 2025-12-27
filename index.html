@@ -55,28 +55,45 @@
     .claim-big{display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff5a4b);color:#fff;border:none;font-weight:700;font-size:16px;cursor:pointer}
     @media (max-width:900px){main{flex-direction:column;align-items:center} .right{width:100%;max-width:520px}}
 
-    /* Join Channel Popup Button */
-    #joinPopupBtn{
+    /* FORCE JOIN OVERLAY */
+    #joinOverlay{
       position:fixed;
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      z-index:9999;
-      display:none;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.95);
+      display:flex; justify-content:center; align-items:center;
+      z-index:999999;
     }
-    #joinPopupBtn button{
+    #joinOverlay .overlayContent{
+      text-align:center;
+      color:white;
+      padding:24px 32px;
+      border-radius:12px;
+      background:#111;
+    }
+    #joinOverlay button{
+      margin-top:20px;
       padding:14px 24px;
       font-size:16px;
       font-weight:bold;
       border:none;
       border-radius:10px;
-      background:var(--accent);
-      color:#fff;
+      background:#ff3b30;
+      color:white;
       cursor:pointer;
     }
   </style>
 </head>
 <body>
+
+  <!-- FORCE JOIN OVERLAY -->
+  <div id="joinOverlay">
+    <div class="overlayContent">
+      <h2>🚫 You must join our Telegram channel to continue</h2>
+      <button onclick="joinAndContinue()">👉 Join & Continue</button>
+    </div>
+  </div>
+
   <header>
     <h1>Radiocash</h1>
     <div class="stats">
@@ -181,11 +198,6 @@
     </div>
   </div>
 
-  <!-- JOIN CHANNEL POPUP BUTTON -->
-  <div id="joinPopupBtn">
-    <button onclick="joinChannelClick()">👉 Join our Telegram Channel</button>
-  </div>
-
   <script>
     const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
     const ADSGRAM_BLOCKS = ["task-task-17583","task-17585","task-17584","task-17586","task-17583","task-17585"];
@@ -259,9 +271,7 @@
         radio.src = STREAM_URL;
         radio.play();
         statusEl.textContent = "🎧 Listening...";
-
         if (listeningTimer) clearInterval(listeningTimer);
-
         listeningTimer = setInterval(() => {
           secondsElapsed += 20;
           sessionTimeEl.textContent = secondsElapsed + "s";
@@ -281,7 +291,6 @@
             claimButtonBig.style.display = "block";
           }
         }, DEDUCT_INTERVAL);
-
       } else {
         radio.pause();
         clearInterval(listeningTimer);
@@ -289,21 +298,9 @@
       }
     });
 
-    /* FIXED POPUP CODE */
-    document.addEventListener("DOMContentLoaded", () => {
-      const rewardAd = window.Adsgram.init({ blockId: "17582" });
-      rewardAd.show()
-      .then(() => showJoinPopup())
-      .catch(() => showJoinPopup());
-    });
-
-    function showJoinPopup(){
-      if(!localStorage.getItem("joinedRewardGiven")){
-        document.getElementById("joinPopupBtn").style.display = "block";
-      }
-    }
-
-    function joinChannelClick(){
+    /* --- FORCE JOIN OVERLAY FUNCTION --- */
+    function joinAndContinue(){
+      window.open("https://t.me/Konnetearnchannel","_blank");
       if(!localStorage.getItem("joinedRewardGiven")){
         points += 10;
         saveAll();
@@ -311,8 +308,7 @@
         localStorage.setItem("joinedRewardGiven","yes");
         alert("🎉 Thanks for joining! +10 points");
       }
-      document.getElementById("joinPopupBtn").remove();
-      window.open("https://t.me/Konnetearnchannel","_blank");
+      document.getElementById("joinOverlay").style.display = "none";
     }
 
     copyReferral.addEventListener("click", () => {
