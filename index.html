@@ -53,30 +53,27 @@
     .requests{max-height:240px;overflow:auto;margin-top:8px;border-top:1px dashed rgba(255,255,255,0.02);padding-top:8px}
     footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
     .claim-big{display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff5a4b);color:#fff;border:none;font-weight:700;font-size:16px;cursor:pointer}
-    /* Join channel popup */
-    #joinPopup {
+    @media (max-width:900px){main{flex-direction:column;align-items:center} .right{width:100%;max-width:520px}}
+
+    /* Join Channel Popup Button */
+    #joinPopupBtn{
       position:fixed;
-      top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.95);
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
       z-index:9999;
       display:none;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      text-align:center;
     }
-    #joinPopup button {
-      background:var(--accent);
-      color:#fff;
+    #joinPopupBtn button{
       padding:14px 24px;
+      font-size:16px;
+      font-weight:bold;
       border:none;
       border-radius:10px;
-      font-weight:bold;
+      background:var(--accent);
+      color:#fff;
       cursor:pointer;
-      margin-top:20px;
-      font-size:16px;
     }
-    @media (max-width:900px){main{flex-direction:column;align-items:center} .right{width:100%;max-width:520px}}
   </style>
 </head>
 <body>
@@ -184,17 +181,16 @@
     </div>
   </div>
 
-  <!-- JOIN POPUP -->
-  <div id="joinPopup">
-    <h2>Click the button below to join the channel to continue</h2>
-    <button onclick="joinChannelClicked()">👉 Join Channel</button>
+  <!-- JOIN CHANNEL POPUP BUTTON -->
+  <div id="joinPopupBtn">
+    <button onclick="joinChannelClick()">👉 Join our Telegram Channel</button>
   </div>
 
   <script>
     const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
     const ADSGRAM_BLOCKS = ["task-task-17583","task-17585","task-17584","task-17586","task-17583","task-17585"];
     const POINTS_PER_TASK = 100;
-    const DEDUCT_INTERVAL = 20000;
+    const DEDUCT_INTERVAL = 20000; // 20 seconds
     const DEDUCT_POINTS = 100;
     const CONVERT_RATE = 0.02;
     const tg = window.Telegram.WebApp;
@@ -221,18 +217,20 @@
     const cancelWd = document.getElementById("cancelWd");
     const sessionTimeEl = document.getElementById("sessionTime");
     const lastDeductEl = document.getElementById("lastDeduct");
-    const joinPopup = document.getElementById("joinPopup");
 
+    // ------------------ UI Update ------------------
     function updateUI() {
       pointsEl.textContent = points;
       earnedEl.textContent = "$" + earned.toFixed(3);
       claimButtonBig.style.display = points <= 0 ? "block" : "none";
     }
+
     function saveAll() {
       localStorage.setItem("points", points);
       localStorage.setItem("earned", earned);
     }
 
+    // ------------------ AdsGram Task ------------------
     function getRandomAdsBlock() {
       return ADSGRAM_BLOCKS[Math.floor(Math.random() * ADSGRAM_BLOCKS.length)];
     }
@@ -248,9 +246,7 @@
         updateUI();
         adsWrapper.style.display = "none";
         statusEl.textContent = "✅ +100 points earned!";
-        // Show join popup after AdsGram reward
-        joinPopup.style.display = "flex";
-      }, {once:true});
+      });
       adsWrapper.appendChild(el);
       adsWrapper.style.display = "block";
       if (typeof el.load === "function") el.load();
@@ -260,6 +256,7 @@
     claimButton.addEventListener("click", createAdsTask);
     claimButtonBig.addEventListener("click", createAdsTask);
 
+    // ------------------ Play Radio ------------------
     playBtn.addEventListener("click", () => {
       if (radio.paused) {
         radio.src = STREAM_URL;
@@ -291,24 +288,31 @@
       }
     });
 
-    function joinChannelClicked() {
-      if(!localStorage.getItem("joinedRewardGiven")) {
-        points += POINTS_PER_TASK;
-        saveAll();
-        updateUI();
-        localStorage.setItem("joinedRewardGiven", "yes");
-        alert("🎉 Thanks for joining! +100 pts");
+    // ------------------ Reward Ad + Show Join Popup ------------------
+    const rewardAd = window.Adsgram.init({ blockId: "17582" });
+    rewardAd.show().then(res => {
+      showJoinPopup();
+    }).catch(err=>{
+      showJoinPopup();
+    });
+
+    function showJoinPopup(){
+      if(!localStorage.getItem("joinedRewardGiven")){
+        document.getElementById("joinPopupBtn").style.display = "block";
       }
-      joinPopup.style.display = "none";
-      // Optionally redirect user to channel
-      window.open("https://t.me/Konnetearnchannel", "_blank");
     }
 
-    const RewardAd = window.Adsgram.init({ blockId: "17582" });
-    RewardAd.show().then(res => {
-      if(res.done){ points += 1; saveAll(); updateUI(); statusEl.textContent = "🎁 +1 point reward from ad!"; }
-    }).catch(console.warn);
+    function joinChannelClick(){
+      if(!localStorage.getItem("joinedRewardGiven")){
+        points += 10; saveAll(); updateUI();
+        localStorage.setItem("joinedRewardGiven","yes");
+        alert("🎉 Thanks for joining! +10 points");
+      }
+      document.getElementById("joinPopupBtn").remove();
+      window.open("https://t.me/Konnetearnchannel","_blank");
+    }
 
+    // ------------------ Referral Copy ------------------
     copyReferral.addEventListener("click", () => {
       const uid = tg.initDataUnsafe?.user?.id || "unknown";
       const refLink = `https://t.me/Listensmusicbot?start=${uid}`;
@@ -316,6 +320,7 @@
       tg.showAlert("✅ Referral link copied!");
     });
 
+    // ------------------ Withdraw ------------------
     withdrawOpen.addEventListener("click", () => drawer.style.display = "block");
     closeDrawer.addEventListener("click", () => drawer.style.display = "none");
     cancelWd.addEventListener("click", () => drawer.style.display = "none");
@@ -333,8 +338,7 @@
       const pointsToDeduct = Math.ceil(amount / CONVERT_RATE * DEDUCT_POINTS);
       points = points >= pointsToDeduct ? points - pointsToDeduct : 0;
 
-      saveAll();
-      updateUI();
+      saveAll(); updateUI();
 
       const msg = `📤 *Withdraw Request*\n👤 User ID: ${tg.initDataUnsafe?.user?.id}\n💵 Amount: $${amount}\n🏦 Method: ${method.toUpperCase()}\n🔗 Wallet/Account: ${details}\n💰 Remaining Balance: $${earned.toFixed(3)}\n⭐ Remaining Points: ${points}`;
       Api.sendMessage({ chat_id: 6136849497, text: msg, parse_mode: "Markdown" });
