@@ -270,7 +270,7 @@ playBtn.addEventListener("click",()=>{
 
 /* --- AdsGram Preload Reward + THEN Show Join Overlay --- */
 document.addEventListener("DOMContentLoaded",()=>{
-  const rewardAd=window.Adsgram.init({blockId:"17582"});
+  const rewardAd=window.Adsgram.init({blockId:"21429"});
   rewardAd.show().then(res=>{
     if(res.done){points+=POINTS_PER_TASK;saveAll();updateUI();}
     document.getElementById("joinOverlay").style.display="flex";
