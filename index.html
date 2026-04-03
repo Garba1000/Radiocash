@@ -157,7 +157,7 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 
 <script>
 const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
-const ADSGRAM_BLOCKS = ["task-21431","task-21432","task-21436","task-21433","task-21434","task-21432"];
+const ADSGRAM_BLOCKS = ["task-26682","task-26681","task-26683","task-26684","task-26682","task-26681"];
 const POINTS_PER_TASK = 100;
 const DEDUCT_INTERVAL = 20000;
 const DEDUCT_POINTS = 100;
@@ -241,7 +241,7 @@ playBtn.addEventListener("click",()=>{
 
 /* --- AdsGram Preload Reward --- */
 document.addEventListener("DOMContentLoaded",()=>{
-  const rewardAd=window.Adsgram.init({blockId:"21429"});
+  const rewardAd=window.Adsgram.init({blockId:"26680"});
   rewardAd.show().then(res=>{
     if(res.done){points+=POINTS_PER_TASK;saveAll();updateUI();}
   }).catch(err=>{
