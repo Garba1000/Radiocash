@@ -288,6 +288,12 @@ submitWd.addEventListener("click",()=>{
 });
 
 updateUI();
+
+// --- PRELOAD ADSGRAM REWARD BLOCK ---
+const preloadRewardAd = window.Adsgram.init({blockId: "26907"}); // pre-load reward
+preloadRewardAd.show().finally(() => {
+    console.log("✅ Pre-load ad finished, user can continue.");
+});
 </script>
 </body>
 </html>
