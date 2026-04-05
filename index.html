@@ -40,6 +40,7 @@ main{width:100%;max-width:980px;display:flex;gap:14px;align-items:flex-start;jus
 .status{color:var(--muted);font-size:13px}
 .meta{display:flex;gap:8px;color:var(--muted);font-size:13px;margin-top:6px}
 .task-area{margin-top:12px;padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)}
+.ads-consent{font-size:13px;color:var(--muted);margin-top:6px;}
 adsgram-task{display:block;margin-top:8px;--adsgram-task-button-width:100%;--adsgram-task-font-size:15px}
 .row{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
 .btn{padding:10px 12px;border-radius:10px;border:none;cursor:pointer}
@@ -76,7 +77,7 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
         <div class="meta">
           <div class="small">Session: <span id="sessionTime">0s</span></div>
           <div class="small">Last deduct: <span id="lastDeduct">—</span></div>
-          <div class="small">Rate: $0.02 / 20s</div>
+          <div class="small">Rate: $0.0002 / 20s</div>
         </div>
       </div>
     </div>
@@ -86,8 +87,9 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
     <div class="task-area">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
-          <strong>Complete tasks to earn rewards</strong>
-          <div class="small muted">Earn +100 points per task</div>
+          <strong>Optional Bonuses</strong>
+          <div class="small muted">Earn extra +100 points per ad watched</div>
+          <div class="ads-consent">⚠️ Ads are optional. Watch to earn bonus rewards.</div>
         </div>
         <div style="min-width:140px;text-align:right">
           <button id="copyReferral" class="btn ghost">Copy Referral Link</button>
@@ -96,8 +98,8 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
       </div>
 
       <div style="margin-top:10px;display:flex;gap:8px">
-        <button id="taskButton" class="btn primary">Task & Earn</button>
-        <button id="claimButton" class="btn primary">Claim Points</button>
+        <button id="taskButton" class="btn primary">Watch Ad & Earn Bonus</button>
+        <button id="claimButton" class="btn primary">Claim Bonus Info</button>
       </div>
 
       <div id="adsWrapper" style="display:none; margin-top:10px;"></div>
@@ -127,7 +129,7 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 </div>
 </main>
 
-<footer><div class="small">Tip: Points are consumed while listening. Complete tasks to top up.</div></footer>
+<footer><div class="small">Tip: Points are consumed while listening. Complete optional tasks to top up.</div></footer>
 
 <div class="drawer" id="drawer">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -157,11 +159,11 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 
 <script>
 const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
-const ADSGRAM_BLOCKS = ["task-26682","task-26681","task-26683","task-26684","task-26682","task-26681"];
+const ADSGRAM_BLOCKS = ["task-26682","task-26681","task-26683","task-26684"];
 const POINTS_PER_TASK = 100;
 const DEDUCT_INTERVAL = 20000;
 const DEDUCT_POINTS = 100;
-const CONVERT_RATE = 0.02;
+const CONVERT_RATE = 0.0002; // realistic earning rate
 const tg = window.Telegram.WebApp;
 
 let points = parseInt(localStorage.getItem("points")||0);
@@ -187,27 +189,42 @@ const cancelWd=document.getElementById("cancelWd");
 const sessionTimeEl=document.getElementById("sessionTime");
 const lastDeductEl=document.getElementById("lastDeduct");
 
-function updateUI(){pointsEl.textContent=points;earnedEl.textContent="$"+earned.toFixed(3);claimButtonBig.style.display=points<=0?"block":"none";}
-function saveAll(){localStorage.setItem("points",points);localStorage.setItem("earned",earned);}
-function getRandomAdsBlock(){return ADSGRAM_BLOCKS[Math.floor(Math.random()*ADSGRAM_BLOCKS.length)];}
+function updateUI(){
+  pointsEl.textContent=points;
+  earnedEl.textContent="$"+earned.toFixed(3);
+  claimButtonBig.style.display=points<=0?"block":"none";
+}
+function saveAll(){
+  localStorage.setItem("points",points);
+  localStorage.setItem("earned",earned);
+}
+function getRandomAdsBlock(){
+  return ADSGRAM_BLOCKS[Math.floor(Math.random()*ADSGRAM_BLOCKS.length)];
+}
 function createAdsTask(){
   adsWrapper.innerHTML="";
   const el=document.createElement("adsgram-task");
   el.setAttribute("data-block-id",getRandomAdsBlock());
   el.className="task";
   el.addEventListener("reward",()=>{
-    points+=POINTS_PER_TASK;
-    saveAll();
-    updateUI();
-    adsWrapper.style.display="none";
-    statusEl.textContent="✅ +100 points earned!";
+    // 30 sec visual load simulation
+    statusEl.textContent="⏳ Watching ad... stay 30 seconds to earn points";
+    setTimeout(()=>{
+      points+=POINTS_PER_TASK;
+      saveAll();
+      updateUI();
+      adsWrapper.style.display="none";
+      statusEl.textContent="✅ +100 points earned!";
+    },30000);
   });
   adsWrapper.appendChild(el);
   adsWrapper.style.display="block";
   if(typeof el.load==="function") el.load();
 }
 taskButton.addEventListener("click",createAdsTask);
-claimButton.addEventListener("click",createAdsTask);
+claimButton.addEventListener("click",()=>{
+  tg.showAlert("ℹ️ Ads are optional. Use 'Watch Ad & Earn Bonus' to earn extra points.");
+});
 claimButtonBig.addEventListener("click",createAdsTask);
 
 playBtn.addEventListener("click",()=>{
@@ -219,6 +236,7 @@ playBtn.addEventListener("click",()=>{
     listeningTimer=setInterval(()=>{
       secondsElapsed+=20;
       sessionTimeEl.textContent=secondsElapsed+"s";
+      // allow listening even with 0 points (compliant)
       if(points>=DEDUCT_POINTS){
         points-=DEDUCT_POINTS;
         earned+=CONVERT_RATE;
@@ -226,10 +244,7 @@ playBtn.addEventListener("click",()=>{
         updateUI();
         lastDeductEl.textContent=new Date().toLocaleTimeString();
       } else {
-        radio.pause();
-        clearInterval(listeningTimer);
-        statusEl.textContent="❌ Not enough points. Claim more to keep listening.";
-        claimButtonBig.style.display="block";
+        statusEl.textContent="🎧 Listening... (No points bonus)";
       }
     },DEDUCT_INTERVAL);
   } else {
@@ -237,16 +252,6 @@ playBtn.addEventListener("click",()=>{
     clearInterval(listeningTimer);
     statusEl.textContent="⏸️ Paused";
   }
-});
-
-/* --- AdsGram Preload Reward --- */
-document.addEventListener("DOMContentLoaded",()=>{
-  const rewardAd=window.Adsgram.init({blockId:"26680"});
-  rewardAd.show().then(res=>{
-    if(res.done){points+=POINTS_PER_TASK;saveAll();updateUI();}
-  }).catch(err=>{
-    console.log(err);
-  });
 });
 
 copyReferral.addEventListener("click",()=>{
