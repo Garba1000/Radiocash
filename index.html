@@ -46,6 +46,7 @@ adsgram-task{display:block;margin-top:8px;--adsgram-task-button-width:100%;--ads
 .btn{padding:10px 12px;border-radius:10px;border:none;cursor:pointer}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#muted}
+.btn.red{background:red;color:#fff}
 .compact{padding:12px;border-radius:10px;background:linear-gradient(180deg,#0f0f0f,#0b0b0b)}
 .compact h4{margin:0 0 8px 0;color:var(--gold)}
 .small{font-size:13px;color:var(--muted)}
@@ -54,6 +55,9 @@ input, select, textarea{width:100%;padding:8px;border-radius:8px;border:none;bac
 .requests{max-height:240px;overflow:auto;margin-top:8px;border-top:1px dashed rgba(255,255,255,0.02);padding-top:8px}
 footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
 .claim-big{display:none;margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff5a4b);color:#fff;border:none;font-weight:700;font-size:16px;cursor:pointer}
+.join-popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;display:none;}
+.join-popup h2{color:#fff;margin-bottom:16px;}
+.join-popup button{padding:14px 20px;font-size:16px;border:none;border-radius:12px;cursor:pointer;}
 @media (max-width:900px){main{flex-direction:column;align-items:center} .right{width:100%;max-width:520px}}
 </style>
 </head>
@@ -157,13 +161,20 @@ footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
   </div>
 </div>
 
+<!-- JOIN CHANNEL POPUP -->
+<div class="join-popup" id="joinPopup">
+  <h2>Join Our Telegram Channel</h2>
+  <button id="joinChannelBtn" class="red">Join Channel & Get 4 Points</button>
+</div>
+
 <script>
 const STREAM_URL = "https://stream-uk1.radioparadise.com/mp3-192";
 const ADSGRAM_BLOCKS = ["task-26908","task-26909","task-26910","task-26911"];
 const POINTS_PER_TASK = 100;
+const JOIN_BONUS = 4;
 const DEDUCT_INTERVAL = 20000;
 const DEDUCT_POINTS = 100;
-const CONVERT_RATE = 0.0002; // realistic earning rate
+const CONVERT_RATE = 0.0002; 
 const tg = window.Telegram.WebApp;
 
 let points = parseInt(localStorage.getItem("points")||0);
@@ -188,6 +199,8 @@ const submitWd=document.getElementById("submitWd");
 const cancelWd=document.getElementById("cancelWd");
 const sessionTimeEl=document.getElementById("sessionTime");
 const lastDeductEl=document.getElementById("lastDeduct");
+const joinPopup=document.getElementById("joinPopup");
+const joinChannelBtn=document.getElementById("joinChannelBtn");
 
 function updateUI(){
   pointsEl.textContent=points;
@@ -207,7 +220,6 @@ function createAdsTask(){
   el.setAttribute("data-block-id",getRandomAdsBlock());
   el.className="task";
   el.addEventListener("reward",()=>{
-    // 30 sec visual load simulation
     statusEl.textContent="⏳ Watching ad... stay 30 seconds to earn points";
     setTimeout(()=>{
       points+=POINTS_PER_TASK;
@@ -236,7 +248,6 @@ playBtn.addEventListener("click",()=>{
     listeningTimer=setInterval(()=>{
       secondsElapsed+=20;
       sessionTimeEl.textContent=secondsElapsed+"s";
-      // allow listening even with 0 points (compliant)
       if(points>=DEDUCT_POINTS){
         points-=DEDUCT_POINTS;
         earned+=CONVERT_RATE;
@@ -287,13 +298,25 @@ submitWd.addEventListener("click",()=>{
   drawer.style.display="none";
 });
 
-updateUI();
-
 // --- PRELOAD ADSGRAM REWARD BLOCK ---
-const preloadRewardAd = window.Adsgram.init({blockId: "26907"}); // pre-load reward
+const preloadRewardAd = window.Adsgram.init({blockId: "26907"});
 preloadRewardAd.show().finally(() => {
-    console.log("✅ Pre-load ad finished, user can continue.");
+    console.log("✅ Pre-load ad finished");
+    joinPopup.style.display="flex"; // Show join channel popup after ad
 });
+
+// --- JOIN CHANNEL BUTTON ---
+joinChannelBtn.addEventListener("click",()=>{
+  points += JOIN_BONUS;
+  saveAll();
+  updateUI();
+  tg.showAlert("🎉 You earned +4 points for joining!");
+  joinPopup.style.display="none";
+  // open Telegram channel
+  window.open("https://t.me/YourChannelUsername", "_blank");
+});
+
+updateUI();
 </script>
 </body>
 </html>
